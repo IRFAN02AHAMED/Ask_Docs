@@ -1,168 +1,41 @@
-
 import React, { useEffect, useState } from "react";
 import {
   Box,
   Typography,
   Button,
-  Paper,
   Grid,
-  Chip,
-  Divider,
-  Avatar,
-  TextField,
   CircularProgress,
   Tooltip,
   Alert,
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogActions,
 } from "@mui/material";
 import useUIStore from "../../store/uiStore";
 import { SharedAdminSidebar } from "../../components/layout/SharedLayout";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import RadioButtonCheckedIcon from "@mui/icons-material/RadioButtonChecked";
-import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
-import FolderOutlinedIcon from "@mui/icons-material/FolderOutlined";
 import InsertDriveFileOutlinedIcon from "@mui/icons-material/InsertDriveFileOutlined";
 import FormatListNumberedOutlinedIcon from "@mui/icons-material/FormatListNumberedOutlined";
-import ScienceOutlinedIcon from "@mui/icons-material/ScienceOutlined";
-import AutoAwesomeOutlinedIcon from "@mui/icons-material/AutoAwesomeOutlined";
-import ThumbUpOutlinedIcon from "@mui/icons-material/ThumbUpOutlined";
-import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
-import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import PublishIcon from "@mui/icons-material/Publish";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import PlayArrowIcon from "@mui/icons-material/PlayArrow";
 
 import { useParams, useNavigate } from "react-router-dom";
-
 import useDocumentStore from "../../store/documentStore";
 import useQAStore from "../../store/qaStore";
-import { formatDate, parseTags } from "../../utils/helpers";
-import { SourceChunksSection } from "../../components/common/SourceChunkCard";
 import apiClient from "../../services/apiClient";
 
-const STATUS_ORDER = ["pending", "processing", "processed", "published"];
+// Extracted Components & Helpers
+import DocumentStatusTracker from "../../components/documents/DocumentStatusTracker";
+import DocumentMetadataCard from "../../components/documents/DocumentMetadataCard";
+import DocumentInfoStatCard from "../../components/documents/DocumentInfoStatCard";
+import DocumentQATestingCard from "../../components/documents/DocumentQATestingCard";
+import DocumentAIAnswerCard from "../../components/documents/DocumentAIAnswerCard";
+import IndexedChunksDialog from "../../components/documents/IndexedChunksDialog";
+import VersionHistoryDialog from "../../components/documents/VersionHistoryDialog";
 
-const StatusStep = ({ label, status, active }) => {
-  let icon;
-
-  if (status === "completed") {
-    icon = (
-      <CheckCircleIcon
-        sx={{
-          color: "#10B981",
-          fontSize: 28,
-          zIndex: 1,
-          backgroundColor: "white",
-        }}
-      />
-    );
-  } else if (status === "current") {
-    icon = (
-      <RadioButtonCheckedIcon
-        sx={{
-          color: "#3B82F6",
-          fontSize: 28,
-          zIndex: 1,
-          backgroundColor: "white",
-        }}
-      />
-    );
-  } else {
-    icon = (
-      <FiberManualRecordIcon
-        sx={{
-          color: "#D1D5DB",
-          fontSize: 16,
-          zIndex: 1,
-          backgroundColor: "white",
-          m: "6px",
-        }}
-      />
-    );
-  }
-
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        alignItems: "center",
-        position: "relative",
-        width: 100,
-      }}
-    >
-      {icon}
-
-      <Typography
-        sx={{
-          mt: 1,
-          fontSize: "0.85rem",
-          fontWeight: active ? 700 : 500,
-          color: active
-            ? "#111827"
-            : status === "completed"
-            ? "#111827"
-            : "#9CA3AF",
-        }}
-      >
-        {label}
-      </Typography>
-    </Box>
-  );
-};
-
-const formatTokenCount = (count) => {
-  if (!count && count !== 0) return "N/A";
-  if (count >= 1000) return `~${(count / 1000).toFixed(1)}k`;
-  return `~${count}`;
-};
-
-const getConfidenceBadge = (score, answerText) => {
-  const s = parseFloat(score || 0);
-
-  const isFallback =
-    answerText?.toLowerCase().includes("could not find enough information") ||
-    answerText?.toLowerCase().includes("no chunks found") ||
-    answerText?.toLowerCase().includes("please process or publish");
-
-  if (isFallback) {
-    return {
-      label: "Low",
-      color: "#EF4444",
-      bg: "#FEE2E2",
-      border: "#FECACA",
-    };
-  }
-
-  if (s >= 0.8) {
-    return {
-      label: "High",
-      color: "#16A34A",
-      bg: "#DCFCE7",
-      border: "#86EFAC",
-    };
-  }
-
-  if (s >= 0.5) {
-    return {
-      label: "Medium",
-      color: "#D97706",
-      bg: "#FEF3C7",
-      border: "#FDE68A",
-    };
-  }
-
-  return {
-    label: "Low",
-    color: "#EF4444",
-    bg: "#FEE2E2",
-    border: "#FECACA",
-  };
-};
+import {
+  formatTokenCount,
+  parseDocumentStatus,
+  getVersionLabel,
+} from "../../utils/documentHelpers";
 
 const DocumentDetailsPage = () => {
   const { id } = useParams();
@@ -232,45 +105,14 @@ const DocumentDetailsPage = () => {
 
   const activeAnswer = currentAnswer || localAnswer;
 
-  const rawStatus = doc?.status;
-  const statusStr =
-    typeof rawStatus === "object" && rawStatus !== null
-      ? rawStatus.status_name || rawStatus.name
-      : rawStatus;
-
-  const status = String(statusStr || "").toLowerCase();
+  const status = parseDocumentStatus(doc?.status);
 
   const currentVersion = doc?.current_version;
   const fileType = currentVersion?.file_type || doc?.file_type || "TXT";
   const tokenCount = currentVersion?.token_count || null;
   const qaTestStatus = currentVersion?.qa_test_status || "not_tested";
 
-  const versionLabel =
-    currentVersion?.version_label ||
-    (currentVersion?.version_no ? `v${currentVersion.version_no}.0` : null) ||
-    (doc?.current_version_no ? `v${doc.current_version_no}.0` : "N/A");
-
-  const statusIdx = STATUS_ORDER.indexOf(status);
-
-  const getStepStatus = (stepName) => {
-    const stepIdx = STATUS_ORDER.indexOf(stepName);
-
-    if (status === "failed") {
-      return stepIdx === 0 ? "completed" : "pending";
-    }
-
-    if (stepIdx < statusIdx) return "completed";
-    if (stepIdx === statusIdx) return "current";
-    return "pending";
-  };
-
-  const getProgressWidth = () => {
-    if (status === "pending") return "0%";
-    if (status === "processing") return "33%";
-    if (status === "processed") return "66%";
-    if (status === "published") return "100%";
-    return "0%";
-  };
+  const versionLabel = getVersionLabel(currentVersion, doc);
 
   const handleForceProcess = async () => {
     if (!id) return;
@@ -366,93 +208,93 @@ const DocumentDetailsPage = () => {
   };
 
   const handleCopy = async (text) => {
-  try {
-    if (!text) {
-      openSnackbar("No answer text to copy", "warning");
-      return;
-    }
+    try {
+      if (!text) {
+        openSnackbar("No answer text to copy", "warning");
+        return;
+      }
 
-    if (navigator.clipboard && window.isSecureContext) {
-      await navigator.clipboard.writeText(text);
-    } else {
-      const textArea = document.createElement("textarea");
-      textArea.value = text;
-      textArea.style.position = "fixed";
-      textArea.style.left = "-999999px";
-      document.body.appendChild(textArea);
-      textArea.focus();
-      textArea.select();
-      document.execCommand("copy");
-      document.body.removeChild(textArea);
-    }
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const textArea = document.createElement("textarea");
+        textArea.value = text;
+        textArea.style.position = "fixed";
+        textArea.style.left = "-999999px";
+        document.body.appendChild(textArea);
+        textArea.focus();
+        textArea.select();
+        document.execCommand("copy");
+        document.body.removeChild(textArea);
+      }
 
-    openSnackbar("Answer copied to clipboard", "success");
-  } catch (err) {
-    console.error("Copy failed:", err);
-    openSnackbar("Failed to copy answer", "error");
-  }
-};
+      openSnackbar("Answer copied to clipboard", "success");
+    } catch (err) {
+      console.error("Copy failed:", err);
+      openSnackbar("Failed to copy answer", "error");
+    }
+  };
 
   const handleOpenChunks = async () => {
-  setChunksModalOpen(true);
-  setChunksLoading(true);
+    setChunksModalOpen(true);
+    setChunksLoading(true);
 
-  try {
-    const response = await apiClient.get(`/api/v1/documents/${id}/chunks`);
+    try {
+      const response = await apiClient.get(`/api/v1/documents/${id}/chunks`);
 
-    const chunks = Array.isArray(response.data)
-      ? response.data
-      : Array.isArray(response.data?.data)
-      ? response.data.data
-      : Array.isArray(response.data?.data?.items)
-      ? response.data.data.items
-      : [];
+      const chunks = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.data)
+        ? response.data.data
+        : Array.isArray(response.data?.data?.items)
+        ? response.data.data.items
+        : [];
 
-    setChunksList(chunks);
-  } catch (err) {
-    console.error("Failed to fetch chunks", err);
-    setChunksList([]);
-    setActionError(
-      err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        "Failed to fetch indexed chunks."
-    );
-  } finally {
-    setChunksLoading(false);
-  }
-};
+      setChunksList(chunks);
+    } catch (err) {
+      console.error("Failed to fetch chunks", err);
+      setChunksList([]);
+      setActionError(
+        err?.response?.data?.detail ||
+          err?.response?.data?.message ||
+          "Failed to fetch indexed chunks."
+      );
+    } finally {
+      setChunksLoading(false);
+    }
+  };
 
   const handleOpenVersions = async () => {
-  setVersionsModalOpen(true);
-  setVersionsLoading(true);
+    setVersionsModalOpen(true);
+    setVersionsLoading(true);
 
-  try {
-    const response = await apiClient.get(`/api/v1/documents/${id}/versions`);
+    try {
+      const response = await apiClient.get(`/api/v1/documents/${id}/versions`);
 
-    const versions = Array.isArray(response.data)
-      ? response.data
-      : Array.isArray(response.data?.data)
-      ? response.data.data
-      : Array.isArray(response.data?.data?.items)
-      ? response.data.data.items
-      : [];
+      const versions = Array.isArray(response.data)
+        ? response.data
+        : Array.isArray(response.data?.data)
+        ? response.data.data
+        : Array.isArray(response.data?.data?.items)
+        ? response.data.data.items
+        : [];
 
-    console.log("Versions API response:", response.data);
-    console.log("Versions final list:", versions);
+      console.log("Versions API response:", response.data);
+      console.log("Versions final list:", versions);
 
-    setVersionsList(versions);
-  } catch (err) {
-    console.error("Failed to fetch document versions", err);
-    setVersionsList([]);
-    setActionError(
-      err?.response?.data?.detail ||
-        err?.response?.data?.message ||
-        "Failed to fetch document versions."
-    );
-  } finally {
-    setVersionsLoading(false);
-  }
-};
+      setVersionsList(versions);
+    } catch (err) {
+      console.error("Failed to fetch document versions", err);
+      setVersionsList([]);
+      setActionError(
+        err?.response?.data?.detail ||
+          err?.response?.data?.message ||
+          "Failed to fetch document versions."
+      );
+    } finally {
+      setVersionsLoading(false);
+    }
+  };
 
   if (docLoading) {
     return (
@@ -492,7 +334,6 @@ const DocumentDetailsPage = () => {
   const isProcessed = status === "processed";
   const isPublished = status === "published";
   const isPending = status === "pending";
-  const isProcessing = status === "processing";
   const isFailed = status === "failed";
 
   const canTest = isProcessed || isPublished;
@@ -692,406 +533,31 @@ const DocumentDetailsPage = () => {
           )}
 
           {/* Status Tracker */}
-          <Paper
-            elevation={0}
-            sx={{
-              p: 4,
-              borderRadius: 3,
-              border: "1px solid #E5E7EB",
-              backgroundColor: "white",
-              mb: 4,
-              position: "relative",
-            }}
-          >
-            <Typography
-              sx={{
-                fontSize: "0.75rem",
-                fontWeight: 700,
-                color: "#6B7280",
-                letterSpacing: "0.5px",
-                mb: 3,
-              }}
-            >
-              DOCUMENT STATUS
-            </Typography>
-
-            <Box
-              sx={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "flex-start",
-                position: "relative",
-                px: 4,
-              }}
-            >
-              <Box
-                sx={{
-                  position: "absolute",
-                  top: 14,
-                  left: 90,
-                  right: 90,
-                  height: 2,
-                  display: "flex",
-                }}
-              >
-                <Box
-                  sx={{
-                    width: getProgressWidth(),
-                    height: "100%",
-                    backgroundColor: "#3B82F6",
-                    transition: "width 0.5s ease",
-                  }}
-                />
-                <Box
-                  sx={{
-                    flexGrow: 1,
-                    height: "100%",
-                    backgroundColor: "#E5E7EB",
-                  }}
-                />
-              </Box>
-
-              <StatusStep
-                label="Pending"
-                status={getStepStatus("pending")}
-                active={isPending}
-              />
-              <StatusStep
-                label="Processing"
-                status={getStepStatus("processing")}
-                active={isProcessing}
-              />
-              <StatusStep
-                label="Processed"
-                status={getStepStatus("processed")}
-                active={isProcessed}
-              />
-              <StatusStep
-                label="Published"
-                status={getStepStatus("published")}
-                active={isPublished}
-              />
-
-              {isFailed && (
-                <StatusStep label="Failed" status="current" active={true} />
-              )}
-            </Box>
-          </Paper>
+          <DocumentStatusTracker status={status} />
 
           {/* Cards Row */}
           <Grid container spacing={3} sx={{ mb: 4 }}>
             {/* Metadata Card */}
             <Grid item xs={6}>
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 3,
-                  border: "1px solid #E5E7EB",
-                  backgroundColor: "white",
-                  height: "100%",
-                }}
-              >
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center",
-                    mb: 3,
-                  }}
-                >
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: "1.25rem",
-                      color: "#111827",
-                    }}
-                  >
-                    Metadata
-                  </Typography>
-
-                  <Chip
-                    icon={
-                      <CheckCircleIcon
-                        sx={{ fontSize: "1rem !important" }}
-                      />
-                    }
-                    label="Active"
-                    size="small"
-                    sx={{
-                      backgroundColor: "#ECFDF5",
-                      color: "#10B981",
-                      fontWeight: 600,
-                      border: "1px solid #A7F3D0",
-                    }}
-                  />
-                </Box>
-
-                <Grid container spacing={2}>
-                  <Grid item xs={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "0.8rem",
-                        color: "#6B7280",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Document ID
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "0.95rem",
-                        color: "#111827",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {doc.id}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "0.8rem",
-                        color: "#6B7280",
-                        fontWeight: 500,
-                        mb: 0.5,
-                      }}
-                    >
-                      Category
-                    </Typography>
-
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <FolderOutlinedIcon
-                        sx={{ fontSize: 18, color: "#6B7280" }}
-                      />
-                      <Typography
-                        sx={{
-                          fontSize: "0.95rem",
-                          color: "#374151",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {doc.category?.name || "Uncategorized"}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "0.8rem",
-                        color: "#6B7280",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Current Version
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "0.95rem",
-                        color: "#111827",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {versionLabel}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "0.8rem",
-                        color: "#6B7280",
-                        fontWeight: 500,
-                        mb: 0.5,
-                      }}
-                    >
-                      Uploaded By
-                    </Typography>
-
-                    <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                      <Avatar
-                        sx={{
-                          width: 24,
-                          height: 24,
-                          fontSize: "0.75rem",
-                          backgroundColor: "#3B82F6",
-                          fontWeight: 600,
-                        }}
-                      >
-                        {doc.uploader?.name ? doc.uploader.name[0] : "A"}
-                      </Avatar>
-
-                      <Typography
-                        sx={{
-                          fontSize: "0.95rem",
-                          color: "#374151",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {doc.uploader?.name || "Admin"}
-                      </Typography>
-                    </Box>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "0.8rem",
-                        color: "#6B7280",
-                        fontWeight: 500,
-                      }}
-                    >
-                      Upload Date
-                    </Typography>
-                    <Typography
-                      sx={{
-                        fontSize: "0.95rem",
-                        color: "#111827",
-                        fontWeight: 500,
-                      }}
-                    >
-                      {formatDate(doc.created_at)}
-                    </Typography>
-                  </Grid>
-
-                  <Grid item xs={12}>
-                    <Typography
-                      sx={{
-                        fontSize: "0.8rem",
-                        color: "#6B7280",
-                        fontWeight: 500,
-                        mb: 0.5,
-                      }}
-                    >
-                      Tags
-                    </Typography>
-
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                      {parseTags(doc.tags).map((tag, i) => (
-                        <Chip
-                          key={i}
-                          label={String(tag).toUpperCase()}
-                          size="small"
-                          sx={{
-                            backgroundColor: "#F3F4F6",
-                            color: "#4B5563",
-                            fontWeight: 600,
-                            fontSize: "0.75rem",
-                          }}
-                        />
-                      ))}
-                    </Box>
-                  </Grid>
-                </Grid>
-              </Paper>
+              <DocumentMetadataCard doc={doc} versionLabel={versionLabel} />
             </Grid>
 
             {/* Right Column */}
             <Grid item xs={6}>
               <Box sx={{ display: "flex", gap: 3, mb: 3 }}>
-                <Paper
-                  elevation={0}
-                  sx={{
-                    flex: 1,
-                    p: 2.5,
-                    borderRadius: 3,
-                    border: "1px solid #E5E7EB",
-                    backgroundColor: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      backgroundColor: "#F3F4F6",
-                      p: 1.5,
-                      borderRadius: 2,
-                      color: "#4B5563",
-                      display: "flex",
-                    }}
-                  >
-                    <InsertDriveFileOutlinedIcon />
-                  </Box>
+                <DocumentInfoStatCard
+                  icon={<InsertDriveFileOutlinedIcon />}
+                  label="File Type"
+                  value={fileType}
+                  uppercase={true}
+                />
 
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        color: "#6B7280",
-                      }}
-                    >
-                      File Type
-                    </Typography>
-
-                    <Typography
-                      sx={{
-                        fontSize: "1.25rem",
-                        fontWeight: 700,
-                        color: "#111827",
-                        textTransform: "uppercase",
-                      }}
-                    >
-                      {fileType}
-                    </Typography>
-                  </Box>
-                </Paper>
-
-                <Paper
-                  elevation={0}
-                  sx={{
-                    flex: 1,
-                    p: 2.5,
-                    borderRadius: 3,
-                    border: "1px solid #E5E7EB",
-                    backgroundColor: "white",
-                    display: "flex",
-                    alignItems: "center",
-                    gap: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      backgroundColor: "#F3F4F6",
-                      p: 1.5,
-                      borderRadius: 2,
-                      color: "#4B5563",
-                      display: "flex",
-                    }}
-                  >
-                    <FormatListNumberedOutlinedIcon />
-                  </Box>
-
-                  <Box>
-                    <Typography
-                      sx={{
-                        fontSize: "0.75rem",
-                        fontWeight: 600,
-                        color: "#6B7280",
-                      }}
-                    >
-                      Tokens Processed
-                    </Typography>
-
-                    <Tooltip title="Total tokens processed by AI">
-                      <Typography
-                        sx={{
-                          fontSize: "1.25rem",
-                          fontWeight: 700,
-                          color: "#111827",
-                          cursor: "help",
-                          display: "inline-block",
-                          borderBottom: "1px dotted #9CA3AF",
-                        }}
-                      >
-                        {formatTokenCount(tokenCount)}
-                      </Typography>
-                    </Tooltip>
-                  </Box>
-                </Paper>
+                <DocumentInfoStatCard
+                  icon={<FormatListNumberedOutlinedIcon />}
+                  label="Tokens Processed"
+                  value={formatTokenCount(tokenCount)}
+                  tooltip="Total tokens processed by AI"
+                />
               </Box>
 
               {(isProcessed || isPublished) && (
@@ -1115,747 +581,42 @@ const DocumentDetailsPage = () => {
               )}
 
               {/* QA Testing */}
-              <Paper
-                elevation={0}
-                sx={{
-                  p: 3,
-                  borderRadius: 3,
-                  border: "1px solid #E5E7EB",
-                  backgroundColor: "white",
-                  position: "relative",
-                  opacity: canTest ? 1 : 0.6,
-                }}
-              >
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    right: 0,
-                    width: 250,
-                    height: 250,
-                    background:
-                      "radial-gradient(circle at top right, #ECFDF5 0%, transparent 70%)",
-                    borderTopRightRadius: 12,
-                    opacity: 0.6,
-                    pointerEvents: "none",
-                  }}
-                />
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "flex-start",
-                    mb: 2,
-                    position: "relative",
-                    zIndex: 1,
-                  }}
-                >
-                  <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-                    <ScienceOutlinedIcon sx={{ color: "#10B981" }} />
-                    <Typography
-                      sx={{
-                        fontWeight: 700,
-                        fontSize: "1.2rem",
-                        color: "#111827",
-                      }}
-                    >
-                      Quality Assurance Testing
-                    </Typography>
-                  </Box>
-
-                  <Box sx={{ display: "flex", gap: 1 }}>
-                    {qaTestStatus !== "not_tested" && (
-                      <Chip
-                        label={
-                          qaTestStatus === "looks_good"
-                            ? "Approved"
-                            : "Needs Fix"
-                        }
-                        size="small"
-                        sx={{
-                          backgroundColor:
-                            qaTestStatus === "looks_good"
-                              ? "#ECFDF5"
-                              : "#FEE2E2",
-                          color:
-                            qaTestStatus === "looks_good"
-                              ? "#10B981"
-                              : "#EF4444",
-                          fontWeight: 600,
-                          borderRadius: 1,
-                        }}
-                      />
-                    )}
-
-                    <Chip
-                      label="Simulation Mode"
-                      size="small"
-                      sx={{
-                        backgroundColor: "#F3F4F6",
-                        color: "#4B5563",
-                        fontWeight: 600,
-                        borderRadius: 1,
-                      }}
-                    />
-                  </Box>
-                </Box>
-
-                {!canTest ? (
-                  <Alert
-                    severity="info"
-                    sx={{
-                      borderRadius: 2,
-                      position: "relative",
-                      zIndex: 1,
-                    }}
-                  >
-                    Process the document first before testing. Click "Process
-                    Document" above.
-                  </Alert>
-                ) : (
-                  <>
-                    <Typography
-                      sx={{
-                        color: "#4B5563",
-                        fontSize: "0.95rem",
-                        mb: 3,
-                        position: "relative",
-                        zIndex: 1,
-                      }}
-                    >
-                      Ask a question specifically about this document to test
-                      the current embedding and retrieval configuration before
-                      publishing.
-                    </Typography>
-
-                    <Box sx={{ position: "relative", zIndex: 1 }}>
-                      <TextField
-                        fullWidth
-                        multiline
-                        minRows={2}
-                        placeholder="e.g., What is this document about?"
-                        value={testQuestion}
-                        onChange={(e) => setTestQuestion(e.target.value)}
-                        sx={{
-                          backgroundColor: "white",
-                          "& .MuiOutlinedInput-root": {
-                            borderRadius: 2,
-                            pb: 6,
-                            "& fieldset": { borderColor: "#E5E7EB" },
-                          },
-                        }}
-                      />
-
-                      <Button
-                        variant="contained"
-                        onClick={handleAskTestQuestion}
-                        disabled={askLoading || !testQuestion.trim()}
-                        startIcon={
-                          askLoading ? (
-                            <CircularProgress size={16} color="inherit" />
-                          ) : (
-                            <AutoAwesomeOutlinedIcon />
-                          )
-                        }
-                        sx={{
-                          position: "absolute",
-                          bottom: 12,
-                          right: 12,
-                          backgroundColor: "#10B981",
-                          color: "#ffffff",
-                          textTransform: "none",
-                          fontWeight: 600,
-                          borderRadius: 1.5,
-                          px: 2,
-                          boxShadow: "none",
-                          "&:hover": {
-                            backgroundColor: "#D1D5DB",
-                            boxShadow: "none",
-                          },
-                          "&.Mui-disabled": {
-                            backgroundColor: "#F3F4F6",
-                            color: "#9CA3AF",
-                          },
-                        }}
-                      >
-                        {askLoading ? "Analyzing..." : "Ask Test Question"}
-                      </Button>
-                    </Box>
-                  </>
-                )}
-              </Paper>
+              <DocumentQATestingCard
+                canTest={canTest}
+                qaTestStatus={qaTestStatus}
+                testQuestion={testQuestion}
+                setTestQuestion={setTestQuestion}
+                askLoading={askLoading}
+                handleAskTestQuestion={handleAskTestQuestion}
+              />
             </Grid>
           </Grid>
 
           {/* AI Answer */}
-          {activeAnswer && (
-            <Paper
-              elevation={0}
-              sx={{
-                display: "flex",
-                flexDirection: "column",
-                borderRadius: "12px",
-                border: "1px solid #E5E7EB",
-                overflow: "hidden",
-                backgroundColor: "white",
-                mb: 4,
-                flexShrink: 0,
-              }}
-            >
-              <Box sx={{ p: 3, display: "flex", flexDirection: "column", gap: 3 }}>
-                <Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-                  <Avatar
-                    sx={{
-                      width: 32,
-                      height: 32,
-                      fontSize: "0.8rem",
-                      fontWeight: 700,
-                      backgroundColor: "#E5E7EB",
-                      color: "#4B5563",
-                    }}
-                  >
-                    AD
-                  </Avatar>
-
-                  <Typography
-                    sx={{
-                      fontWeight: 700,
-                      fontSize: "1.1rem",
-                      color: "#111827",
-                    }}
-                  >
-                    {activeAnswer.question || testQuestion}
-                  </Typography>
-                </Box>
-
-                <Box sx={{ display: "flex", gap: 2, alignItems: "stretch" }}>
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        backgroundColor: "#10B981",
-                        color: "white",
-                        p: 0.5,
-                        borderRadius: "50%",
-                        display: "flex",
-                        justifyContent: "center",
-                        alignItems: "center",
-                      }}
-                    >
-                      <AutoAwesomeOutlinedIcon sx={{ fontSize: 18 }} />
-                    </Box>
-
-                    <Box
-                      sx={{
-                        width: "2px",
-                        backgroundColor: "#10B981",
-                        flexGrow: 1,
-                        my: 1,
-                      }}
-                    />
-                  </Box>
-
-                  <Box sx={{ flexGrow: 1, pl: 0.5 }}>
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                        mb: 1.5,
-                        pt: 0.5,
-                      }}
-                    >
-                      <Typography
-                        sx={{
-                          fontSize: "0.95rem",
-                          fontWeight: 700,
-                          color: "#10B981",
-                        }}
-                      >
-                        AI Analysis
-                      </Typography>
-
-                      {(() => {
-                        const badge = getConfidenceBadge(
-                          activeAnswer.confidence_score,
-                          activeAnswer.answer
-                        );
-
-                        return (
-                          <Chip
-                            icon={
-                              <Box
-                                sx={{
-                                  width: 6,
-                                  height: 6,
-                                  borderRadius: "50%",
-                                  backgroundColor: badge.color,
-                                  ml: 1,
-                                  mr: -0.5,
-                                }}
-                              />
-                            }
-                            label={`Confidence: ${badge.label} (${parseFloat(
-                              activeAnswer.confidence_score || 0
-                            ).toFixed(2)})`}
-                            size="small"
-                            sx={{
-                              backgroundColor: badge.bg,
-                              color: badge.color,
-                              fontWeight: 600,
-                              border: `1px solid ${badge.border}`,
-                              "& .MuiChip-icon": { color: "inherit" },
-                            }}
-                          />
-                        );
-                      })()}
-                    </Box>
-
-                    <Typography
-                      sx={{
-                        fontSize: "0.95rem",
-                        color: "#374151",
-                        lineHeight: 1.65,
-                        mb: 2,
-                        whiteSpace: "pre-wrap",
-                      }}
-                    >
-                      {activeAnswer.answer}
-                    </Typography>
-
-                    <Box
-                      sx={{
-                        display: "flex",
-                        justifyContent: "space-between",
-                        alignItems: "center",
-                      }}
-                    >
-                      <Box sx={{ display: "flex", gap: 1.5 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleQAApproval("looks_good")}
-                          startIcon={
-                            <ThumbUpOutlinedIcon
-                              sx={{
-                                color:
-                                  feedbackSent === "up" ? "white" : "#10B981",
-                              }}
-                            />
-                          }
-                          sx={{
-                            borderColor:
-                              feedbackSent === "up" ? "#10B981" : "#E5E7EB",
-                            color: feedbackSent === "up" ? "white" : "#374151",
-                            backgroundColor:
-                              feedbackSent === "up" ? "#10B981" : "transparent",
-                            textTransform: "none",
-                            fontWeight: 600,
-                            borderRadius: 2,
-                            px: 2,
-                            py: 0.5,
-                            "&:hover": {
-                              backgroundColor:
-                                feedbackSent === "up" ? "#10B981" : "#ECFDF5",
-                              borderColor: "#A7F3D0",
-                            },
-                          }}
-                        >
-                          Helpful
-                        </Button>
-
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleQAApproval("needs_fix")}
-                          startIcon={
-                            <ThumbDownOutlinedIcon
-                              sx={{
-                                color:
-                                  feedbackSent === "down"
-                                    ? "white"
-                                    : "#EF4444",
-                              }}
-                            />
-                          }
-                          sx={{
-                            borderColor:
-                              feedbackSent === "down" ? "#EF4444" : "#E5E7EB",
-                            color:
-                              feedbackSent === "down" ? "white" : "#374151",
-                            backgroundColor:
-                              feedbackSent === "down"
-                                ? "#EF4444"
-                                : "transparent",
-                            textTransform: "none",
-                            fontWeight: 600,
-                            borderRadius: 2,
-                            px: 2,
-                            py: 0.5,
-                            "&:hover": {
-                              backgroundColor:
-                                feedbackSent === "down"
-                                  ? "#EF4444"
-                                  : "#FEE2E2",
-                              borderColor: "#FECACA",
-                            },
-                          }}
-                        >
-                          Not Helpful
-                        </Button>
-                      </Box>
-
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleCopy(activeAnswer.answer)}
-                        startIcon={
-                          <FileCopyOutlinedIcon
-                            sx={{ fontSize: 14, color: "#4B5563" }}
-                          />
-                        }
-                        sx={{
-                          borderColor: "#E5E7EB",
-                          color: "#374151",
-                          textTransform: "none",
-                          fontWeight: 600,
-                          borderRadius: 2,
-                          px: 2,
-                          py: 0.5,
-                          "&:hover": {
-                            backgroundColor: "#F9FAFB",
-                            borderColor: "#D1D5DB",
-                          },
-                        }}
-                      >
-                        Copy
-                      </Button>
-                    </Box>
-                  </Box>
-                </Box>
-              </Box>
-
-              {(activeAnswer.source_chunks &&
-                activeAnswer.source_chunks.length > 0) ||
-              activeAnswer.is_unanswered ||
-              activeAnswer.isUnanswered ? (
-                <>
-                  <Divider />
-
-                  <Box sx={{ backgroundColor: "#F9FAFB", p: 3, py: 2.5 }}>
-                    {activeAnswer.source_chunks &&
-                    activeAnswer.source_chunks.length > 0 &&
-                    !activeAnswer.is_unanswered &&
-                    !activeAnswer.isUnanswered ? (
-                      <SourceChunksSection sources={activeAnswer.source_chunks} />
-                    ) : (
-                      <Box>
-                        <Typography
-                          sx={{
-                            fontSize: "0.75rem",
-                            fontWeight: 700,
-                            color: "#6B7280",
-                            mb: 1,
-                            textTransform: "uppercase",
-                            letterSpacing: "0.5px",
-                          }}
-                        >
-                          Sources Used
-                        </Typography>
-
-                        <Typography
-                          sx={{
-                            fontSize: "0.85rem",
-                            color: "#6B7280",
-                            fontStyle: "italic",
-                          }}
-                        >
-                          No sources found for this answer.
-                        </Typography>
-                      </Box>
-                    )}
-                  </Box>
-                </>
-              ) : null}
-            </Paper>
-          )}
+          <DocumentAIAnswerCard
+            activeAnswer={activeAnswer}
+            testQuestion={testQuestion}
+            feedbackSent={feedbackSent}
+            handleQAApproval={handleQAApproval}
+            handleCopy={handleCopy}
+          />
         </Box>
       </Box>
 
-      {/* Indexed Chunks Modal */}
-      <Dialog
+      {/* Modals */}
+      <IndexedChunksDialog
         open={chunksModalOpen}
         onClose={() => setChunksModalOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 700 }}>Indexed Chunks</DialogTitle>
+        chunksLoading={chunksLoading}
+        chunksList={chunksList}
+      />
 
-        <DialogContent dividers>
-          {chunksLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : chunksList.length === 0 ? (
-            <Typography>No chunks found for this document version.</Typography>
-          ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {chunksList.map((chunk) => (
-                <Paper
-                  key={chunk.id}
-                  elevation={0}
-                  sx={{
-                    p: 2,
-                    border: "1px solid #E5E7EB",
-                    borderRadius: 2,
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      mb: 1,
-                    }}
-                  >
-                    <Typography sx={{ fontWeight: 600, fontSize: "0.9rem" }}>
-                      Chunk #{chunk.chunk_no}
-                    </Typography>
-
-                    <Chip
-                      label={chunk.has_embedding ? "Embedded" : "No Embedding"}
-                      size="small"
-                      color={chunk.has_embedding ? "success" : "default"}
-                    />
-                  </Box>
-
-                  <Typography
-                    sx={{
-                      fontSize: "0.85rem",
-                      color: "#4B5563",
-                      whiteSpace: "pre-wrap",
-                    }}
-                  >
-                    {chunk.chunk_text}
-                  </Typography>
-                </Paper>
-              ))}
-            </Box>
-          )}
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setChunksModalOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
-
-      {/* Version History Modal */}
-      <Dialog
+      <VersionHistoryDialog
         open={versionsModalOpen}
         onClose={() => setVersionsModalOpen(false)}
-        maxWidth="md"
-        fullWidth
-      >
-        <DialogTitle sx={{ fontWeight: 700 }}>Version History</DialogTitle>
-
-        <DialogContent dividers>
-          {versionsLoading ? (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 4 }}>
-              <CircularProgress />
-            </Box>
-          ) : versionsList.length === 0 ? (
-            <Typography>No previous versions found for this document.</Typography>
-          ) : (
-            <Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
-              {versionsList.map((version) => (
-                <Paper
-                  key={version.id}
-                  elevation={0}
-                  sx={{
-                    p: 2.5,
-                    border: "1px solid #E5E7EB",
-                    borderRadius: 2,
-                    backgroundColor: version.is_current ? "#F0FDF4" : "#FFFFFF",
-                  }}
-                >
-                  <Box
-                    sx={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      mb: 1,
-                    }}
-                  >
-                    <Box>
-                      <Typography
-                        sx={{
-                          fontWeight: 700,
-                          fontSize: "1rem",
-                          color: "#111827",
-                        }}
-                      >
-                        {version.version_label || `v${version.version_no}.0`}
-                      </Typography>
-
-                      <Typography sx={{ fontSize: "0.85rem", color: "#6B7280" }}>
-                        File: {version.file_name || "N/A"}
-                      </Typography>
-                    </Box>
-
-                    <Box sx={{ display: "flex", gap: 1, alignItems: "center" }}>
-                      {version.is_current && (
-                        <Chip
-                          label="Current"
-                          size="small"
-                          sx={{
-                            backgroundColor: "#DCFCE7",
-                            color: "#16A34A",
-                            fontWeight: 700,
-                          }}
-                        />
-                      )}
-
-                      <Chip
-                        label={
-                          version.status?.status_name ||
-                          version.status?.name ||
-                          "N/A"
-                        }
-                        size="small"
-                        sx={{
-                          backgroundColor: "#F3F4F6",
-                          color: "#374151",
-                          fontWeight: 600,
-                        }}
-                      />
-                    </Box>
-                  </Box>
-
-                  <Divider sx={{ my: 1.5 }} />
-
-                  <Grid container spacing={2}>
-                    <Grid item xs={6}>
-                      <Typography
-                        sx={{
-                          fontSize: "0.75rem",
-                          color: "#6B7280",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Version Number
-                      </Typography>
-
-                      <Typography
-                        sx={{
-                          fontSize: "0.9rem",
-                          color: "#111827",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {version.version_no || "N/A"}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={6}>
-                      <Typography
-                        sx={{
-                          fontSize: "0.75rem",
-                          color: "#6B7280",
-                          fontWeight: 600,
-                        }}
-                      >
-                        File Type
-                      </Typography>
-
-                      <Typography
-                        sx={{
-                          fontSize: "0.9rem",
-                          color: "#111827",
-                          fontWeight: 500,
-                          textTransform: "uppercase",
-                        }}
-                      >
-                        {version.file_type || "N/A"}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={6}>
-                      <Typography
-                        sx={{
-                          fontSize: "0.75rem",
-                          color: "#6B7280",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Tokens
-                      </Typography>
-
-                      <Typography
-                        sx={{
-                          fontSize: "0.9rem",
-                          color: "#111827",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {formatTokenCount(version.token_count)}
-                      </Typography>
-                    </Grid>
-
-                    <Grid item xs={6}>
-                      <Typography
-                        sx={{
-                          fontSize: "0.75rem",
-                          color: "#6B7280",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Uploaded At
-                      </Typography>
-
-                      <Typography
-                        sx={{
-                          fontSize: "0.9rem",
-                          color: "#111827",
-                          fontWeight: 500,
-                        }}
-                      >
-                        {formatDate(version.created_at)}
-                      </Typography>
-                    </Grid>
-                  </Grid>
-
-                  {version.change_note && (
-                    <Box sx={{ mt: 2 }}>
-                      <Typography
-                        sx={{
-                          fontSize: "0.75rem",
-                          color: "#6B7280",
-                          fontWeight: 600,
-                        }}
-                      >
-                        Change Note
-                      </Typography>
-
-                      <Typography sx={{ fontSize: "0.9rem", color: "#374151" }}>
-                        {version.change_note}
-                      </Typography>
-                    </Box>
-                  )}
-                </Paper>
-              ))}
-            </Box>
-          )}
-        </DialogContent>
-
-        <DialogActions>
-          <Button onClick={() => setVersionsModalOpen(false)}>Close</Button>
-        </DialogActions>
-      </Dialog>
+        versionsLoading={versionsLoading}
+        versionsList={versionsList}
+      />
     </Box>
   );
 };
