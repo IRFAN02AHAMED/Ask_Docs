@@ -1,3 +1,19 @@
+//http://localhost:5173/user/documents
+
+// Available documents list
+// Search documents
+// Published document cards
+// Featured first document
+// Category and tags display
+// Document title and description
+// Version display
+// Created date display
+// Ask Questions button
+// Navigate to Ask page with document_id
+// Loading state
+// Empty state
+// Pagination
+
 import React, { useEffect, useState } from "react";
 import { Box, Grid, Typography, Button, Divider } from "@mui/material";
 import { useNavigate } from "react-router-dom";

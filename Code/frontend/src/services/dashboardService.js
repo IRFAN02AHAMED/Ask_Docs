@@ -1,3 +1,5 @@
+// 1. Get dashboard statistics
+
 import apiClient from "./apiClient";
 
 /**

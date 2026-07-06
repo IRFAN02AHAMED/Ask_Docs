@@ -1,3 +1,21 @@
+// documentStore.js = global document state manager using Zustand
+
+// 1. Store documents list
+// 2. Store pagination data
+// 3. Store selected document details
+// 4. Store loading state
+// 5. Store error message
+// 6. Fetch documents list
+// 7. Fetch one document by id
+// 8. Upload document
+// 9. Process document
+// 10. Publish document
+// 11. Delete document
+// 12. Upload new document version
+// 13. Update document QA status
+// 14. Clear selected document
+
+
 import { create } from "zustand";
 import * as documentService from "../services/documentService";
 

@@ -1,3 +1,21 @@
+// Primary color
+// Secondary color
+// Error color
+// Warning color
+// Success color
+// Background color
+// Text colors
+// Font family
+// Typography sizes
+// Button style
+// Card style
+// Chip style
+// Table style
+// TextField style
+// Dialog style
+// Drawer style
+// Border radius
+
 import { createTheme } from "@mui/material/styles";
 
 const theme = createTheme({

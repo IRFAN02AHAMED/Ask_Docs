@@ -1,3 +1,15 @@
+// http://localhost:5173/admin/logs
+
+// Which user asked a question
+// Which AI provider was used
+// Whether the AI response was success or failed
+// What question was asked
+// What answer was generated
+// Confidence score
+// Response time
+// Error message if AI failed
+
+
 import React, { useEffect, useState } from "react";
 import { 
   Box, Typography, Button, Paper, Table, TableHead, TableRow, TableCell, 

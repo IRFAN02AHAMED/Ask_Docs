@@ -170,6 +170,7 @@ class Document(Base):
     status:    Mapped["DocumentStatus"]   = relationship("DocumentStatus", back_populates="documents", lazy="selectin")
     uploader:  Mapped["User"]             = relationship("User", foreign_keys=[uploaded_by], back_populates="documents", lazy="selectin")
     versions:  Mapped[List["DocumentVersion"]] = relationship("DocumentVersion", back_populates="document", cascade="all, delete-orphan", lazy="selectin")
+    qa_messages: Mapped[List["QAMessage"]] = relationship("QAMessage", back_populates="linked_document", lazy="noload")
 
     @property
     def current_version(self):
@@ -333,6 +334,7 @@ class QAMessage(Base):
 
     id:                Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     session_id:        Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("qa_sessions.id", ondelete="CASCADE"), nullable=False)
+    document_id:       Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("documents.id", ondelete="SET NULL"), nullable=True)
     question:          Mapped[str]       = mapped_column(Text, nullable=False)
     answer:            Mapped[str]       = mapped_column(Text, nullable=False)
     helpful:           Mapped[Optional[bool]] = mapped_column(Boolean, nullable=True)
@@ -349,9 +351,10 @@ class QAMessage(Base):
     updated_by:        Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
 
     # Relationships
-    session:       Mapped["QASession"]  = relationship("QASession", back_populates="messages", lazy="selectin")
-    source_chunks: Mapped[List["QAMessageSourceChunk"]] = relationship("QAMessageSourceChunk", back_populates="message", cascade="all, delete-orphan", lazy="selectin")
-    ai_logs:       Mapped[List["AIResponseLog"]]        = relationship("AIResponseLog", back_populates="message", lazy="noload")
+    session:         Mapped["QASession"]  = relationship("QASession", back_populates="messages", lazy="selectin")
+    linked_document: Mapped[Optional["Document"]] = relationship("Document", foreign_keys=[document_id], back_populates="qa_messages", lazy="selectin")
+    source_chunks:   Mapped[List["QAMessageSourceChunk"]] = relationship("QAMessageSourceChunk", back_populates="message", cascade="all, delete-orphan", lazy="selectin")
+    ai_logs:         Mapped[List["AIResponseLog"]]        = relationship("AIResponseLog", back_populates="message", lazy="noload")
 
     @property
     def user(self):
@@ -359,6 +362,8 @@ class QAMessage(Base):
 
     @property
     def document(self):
+        if self.linked_document:
+            return self.linked_document
         if self.source_chunks and len(self.source_chunks) > 0:
             return self.source_chunks[0].chunk.version.document
         return None

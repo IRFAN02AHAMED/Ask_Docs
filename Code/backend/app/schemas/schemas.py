@@ -359,6 +359,7 @@ class QAMessageListOut(BaseSchema):
     user:              Optional[UserListOut] = None
     document:          Optional[DocumentListOut] = None
     category:          Optional[CategoryOut] = None
+    source_chunks:     List[SourceChunkOut] = []
     created_at:        datetime
 
 

@@ -5,11 +5,10 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import LogoutIcon from "@mui/icons-material/Logout";
-import PersonIcon from "@mui/icons-material/Person";
 import AutoStoriesIcon from "@mui/icons-material/AutoStories";
 import useAuth from "../../hooks/useAuth";
 import { useNavigate, useLocation } from "react-router-dom";
-import { getInitials, capitalize } from "../../utils/helpers";
+import { capitalize } from "../../utils/helpers";
 import { TOPBAR_HEIGHT } from "../../utils/constants";
 
 function getUserInitials(user) {

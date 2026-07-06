@@ -5,16 +5,7 @@ import CloseIcon from "@mui/icons-material/Close";
 import LaunchIcon from "@mui/icons-material/Launch";
 import { useNavigate } from "react-router-dom";
 
-/**
- * SourceChunkCard — Displays a single source chunk card matching the design:
- * 
- *  ┌─────────────────────────────────────────────┐
- *  │ 📄 Q3 Financial Report_Draft.pdf      Pg 4  │
- *  │ "...total operating expenses for the third  │
- *  │ quarter reached $4.2 million, a 12%         │
- *  │ sequential increase..."                     │
- *  └─────────────────────────────────────────────┘
- */
+
 const SourceChunkCard = ({ source, onClick }) => {
   const chunk = source.chunk || source.document_chunk || source;
   const version = chunk?.version;

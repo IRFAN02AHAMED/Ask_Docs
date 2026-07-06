@@ -1,3 +1,7 @@
+// http://localhost:5173/admin/history
+
+// QASessionsPage.jsx = admin page to view document-based Q&A history
+
 import React, { useEffect, useState } from "react";
 import { 
   Box, Typography, Button, Paper, Table, TableHead, TableRow, TableCell, 

@@ -87,9 +87,7 @@ const ProfilePage = () => {
                 variant="outlined"
                 helperText="Email address cannot be changed."
               />
-              
-
-              
+            
               <Divider sx={{ my: 1 }} />
               
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>

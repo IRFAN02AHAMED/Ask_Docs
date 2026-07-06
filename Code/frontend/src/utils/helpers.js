@@ -2,6 +2,8 @@
 
 /**
  * Format a date string to a readable format
+ * 2026-07-06T10:30:00.000Z. to Jul 6, 2026
+ * 
  */
 export const formatDate = (dateString) => {
   if (!dateString) return "—";
@@ -49,6 +51,7 @@ export const formatRelativeTime = (dateString) => {
 
 /**
  * Truncate text to a max length
+ * example : This document explains backend setup, database configuration, API routes...
  */
 export const truncateText = (text, maxLength = 100) => {
   if (!text) return "";

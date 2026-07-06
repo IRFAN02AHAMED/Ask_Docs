@@ -1,3 +1,10 @@
+/**
+ * It is used in User modules
+ * Used to show each Q&A history message card.
+ * Used to show each published document card.
+ */
+
+
 import React from "react";
 import { Card, CardContent } from "@mui/material";
 

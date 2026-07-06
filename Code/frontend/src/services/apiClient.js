@@ -1,6 +1,12 @@
+// 1. Create one common Axios client for all backend API calls
+// 2. Attach access token to every request automatically with interceptors
+// 3. Handle expired token/session problems
+
+
 import axios from "axios";
 import { getAccessToken, getRefreshToken, setAccessToken, clearAllTokens } from "../utils/tokenUtils";
 
+// 1. Create common Axios client
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || "http://localhost:8000",
   headers: {
@@ -8,7 +14,10 @@ const apiClient = axios.create({
   },
 });
 
+// 2: Attach token to every request
 // Request interceptor — attach Bearer token
+// Instead of manually adding that in every API call, this file automatically adds it using an Axios request interceptor.
+
 apiClient.interceptors.request.use(
   (config) => {
     const token = getAccessToken();
@@ -40,6 +49,7 @@ apiClient.interceptors.response.use(
   async (error) => {
     const originalRequest = error.config;
 
+    // 3: Handle expired token
     // If 401 and not already retrying
     if (error.response?.status === 401 && !originalRequest._retry) {
       // Don't retry refresh or login endpoints
@@ -65,8 +75,14 @@ apiClient.interceptors.response.use(
       isRefreshing = true;
 
       const refreshToken = getRefreshToken();
+
+//       If refresh token is missing, the app cannot continue the login session.
+// So it clears old login data and redirects the user to /login using window.location.
       if (!refreshToken) {
         clearAllTokens();
+
+        // #window.location.pathname gives the current URL path.
+        // React Router’s useNavigate() only works inside React components or custom hooks. so we used this
         if (window.location.pathname !== "/login") {
           window.location.href = "/login";
         }

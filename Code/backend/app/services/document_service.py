@@ -76,6 +76,11 @@ async def _extract_text_from_file(file: UploadFile) -> str:
 
         elif ext == "pdf":
             import pypdf
+
+            # The uploaded file content is in memory as bytes.
+            # pypdf.PdfReader() expects a file-like object.
+
+            # So this converts bytes into a file-like object:
             reader = pypdf.PdfReader(io.BytesIO(content))
             pages = []
             for page in reader.pages:
@@ -83,6 +88,9 @@ async def _extract_text_from_file(file: UploadFile) -> str:
                 if text:
                     pages.append(text.strip())
             return "\n\n".join(pages), len(reader.pages)
+        
+#         It combines all page texts into one clean document text.
+# The double new line keeps page content separated.
 
         elif ext == "docx":
             import docx

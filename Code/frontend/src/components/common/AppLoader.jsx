@@ -1,3 +1,8 @@
+/**
+ * AppLoader is used to show a loading spinner with a message 
+ * while pages or API data are loading, like documents, users, history, or dashboard data.
+ */
+
 import React from "react";
 import { Box, CircularProgress, Typography } from "@mui/material";
 

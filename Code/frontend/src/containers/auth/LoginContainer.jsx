@@ -13,10 +13,10 @@ const LoginContainer = () => {
 
   React.useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
-    const savedPassword = localStorage.getItem("rememberedPassword");
-    if (savedEmail && savedPassword) {
+    // const savedPassword = localStorage.getItem("rememberedPassword");
+    if (savedEmail) {
       setEmail(savedEmail);
-      setPassword(savedPassword);
+      // setPassword(savedPassword);
       setRememberMe(true);
     }
   }, []);
@@ -27,10 +27,10 @@ const LoginContainer = () => {
     
     if (rememberMe) {
       localStorage.setItem("rememberedEmail", email);
-      localStorage.setItem("rememberedPassword", password);
+      // localStorage.setItem("rememberedPassword", password);
     } else {
       localStorage.removeItem("rememberedEmail");
-      localStorage.removeItem("rememberedPassword");
+      // localStorage.removeItem("rememberedPassword");
     }
 
     try {

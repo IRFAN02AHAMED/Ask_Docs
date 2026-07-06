@@ -1,3 +1,9 @@
+// 1. Fetch categories list
+// 2. Create a new category
+// 3. Update an existing category
+// 4. Delete a category
+
+
 import apiClient from "./apiClient";
 
 /**

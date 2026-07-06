@@ -16,14 +16,6 @@ const EditUserPage = () => {
   const [successMsg, setSuccessMsg] = useState('');
   const [errorMsg, setErrorMsg] = useState('');
 
-  // We map frontend roles directly. Realistically, your backend Roles table has actual IDs. 
-  // However, your backend accepts `{ name, is_active }` or potentially role ID. 
-  // Let's check what the API expects for update. The backend schema says: `name?`, `is_active?`.
-  // Wait, if it doesn't accept role_id, we can't update role. Let's just pass `is_active` and `name` for now 
-  // because the update schema in backend might not allow role changes by default. 
-  // But wait, the user requested to update Name, Email, Active status, and Role. 
-  // Let's provide a role dropdown but only send `is_active` and `name` if role is restricted, or send everything.
-
   useEffect(() => {
     const fetchData = async () => {
       try {

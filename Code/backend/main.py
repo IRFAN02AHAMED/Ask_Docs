@@ -119,20 +119,9 @@ app = FastAPI(
     title=       settings.APP_NAME,
     version=     settings.APP_VERSION,
     description= """
-## AI Knowledge Base Q&A System
-
+## Ask docs AI
 A document knowledge base where users upload project documents and ask questions.
 AI answers using stored document content and shows source references.
-
-### Features
-- 📄 Upload PDF, DOCX, TXT documents
-- 🔍 Semantic search using Google text-embedding-004 + PostgreSQL pgvector
-- 🤖 AI-powered answers using Gemini 2.5 Flash
-- 💬 Chat-style Q&A sessions with history
-- ⭐ Helpful/not helpful feedback
-- 👮 Admin validation of AI answers
-- 📊 Dashboard with analytics
-- 🔐 JWT authentication with role-based access (admin | viewer)
     """,
     docs_url=    "/docs",
     openapi_url= "/openapi.json",

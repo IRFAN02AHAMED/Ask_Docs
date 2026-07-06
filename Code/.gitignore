@@ -1,0 +1,21 @@
+# Node / React
+node_modules/
+dist/
+.env
+
+# Python / FastAPI
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+
+# Uploads / generated files
+uploads/
+*.log
+
+# OS files
+.DS_Store
+
+# IDE
+.vscode/

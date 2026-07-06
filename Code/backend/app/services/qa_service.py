@@ -315,8 +315,11 @@ class QAService:
 
         # Step 3: Save QAMessage
         is_unanswered = (not retrieved_chunks) or (float(confidence or 0) < 0.50)
+        selected_document_id = request.document_ids[0] if request.document_ids else None
+        
         message = QAMessage(
             session_id=        session.id,
+            document_id=       selected_document_id,
             question=          request.question,
             answer=            answer_text,
             confidence_score=  confidence,

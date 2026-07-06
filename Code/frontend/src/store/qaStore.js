@@ -1,3 +1,17 @@
+// qaStore.js stores Q&A-related frontend state temporarily.
+
+// createSession()        → create Q&A session
+// fetchSessions()        → fetch Q&A sessions
+// askQuestion()          → ask AI question
+// fetchSessionMessages() → fetch messages in one session
+// sendFeedback()         → save helpful/not helpful
+// validateMessage()      → admin approve/reject answer
+// fetchHistory()         → fetch Q&A history
+// fetchUnanswered()      → fetch unanswered questions
+// deleteSession()        → delete session
+// clearMessages()        → clear messages from frontend memory
+// clearAnswer()          → clear latest answer from frontend memory
+
 import { create } from "zustand";
 import * as qaService from "../services/qaService";
 

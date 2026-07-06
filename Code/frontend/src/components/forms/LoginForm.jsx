@@ -131,35 +131,55 @@ const LoginForm = ({ email, password, rememberMe, onEmailChange, onPasswordChang
               <Box sx={{ mb: 2.5 }}>
                 <Typography sx={{ fontSize: '0.875rem', fontWeight: 600, color: '#111827', mb: 1 }}>Password</Typography>
                 <TextField
-                  fullWidth
-                  required
-                  placeholder="••••••••"
-                  type={showPassword ? "text" : "password"}
-                  value={password}
-                  onChange={(e) => onPasswordChange(e.target.value)}
-                  autoComplete="new-password"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlinedIcon sx={{ color: '#9CA3AF', fontSize: 20 }} />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword((prev) => !prev)}
-                          edge="end"
-                          size="small"
-                        >
-                          {showPassword ? <VisibilityOff fontSize="small" sx={{ color: '#9CA3AF' }} /> : <Visibility fontSize="small" sx={{ color: '#9CA3AF' }} />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                  sx={{
-                    '& .MuiOutlinedInput-root': { borderRadius: 2 }
-                  }}
-                />
+  fullWidth
+  required
+  placeholder="••••••••"
+  type={showPassword ? "text" : "password"}
+  value={password}
+  onChange={(e) => onPasswordChange(e.target.value)}
+  autoComplete="new-password"
+  name="askdocs_password"
+  InputProps={{
+    startAdornment: (
+      <InputAdornment position="start">
+        <LockOutlinedIcon sx={{ color: "#9CA3AF", fontSize: 20 }} />
+      </InputAdornment>
+    ),
+    endAdornment: (
+      <InputAdornment position="end">
+        <IconButton
+          onClick={() => setShowPassword((prev) => !prev)}
+          edge="end"
+          size="small"
+        >
+          {showPassword ? (
+            <VisibilityOff fontSize="small" sx={{ color: "#9CA3AF" }} />
+          ) : (
+            <Visibility fontSize="small" sx={{ color: "#9CA3AF" }} />
+          )}
+        </IconButton>
+      </InputAdornment>
+    ),
+  }}
+  sx={{
+    "& .MuiOutlinedInput-root": {
+      borderRadius: 2,
+    },
+
+    // Hide browser default password icons
+    "& input::-ms-reveal": {
+      display: "none",
+    },
+    "& input::-ms-clear": {
+      display: "none",
+    },
+    "& input::-webkit-credentials-auto-fill-button": {
+      visibility: "hidden",
+      display: "none",
+      pointerEvents: "none",
+    },
+  }}
+/>
               </Box>
 
               <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 4 }}>

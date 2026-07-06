@@ -1,3 +1,9 @@
+// uiStore.js stores global UI notification state.
+
+// 1. Store snackbar state
+// 2. Open snackbar with message
+// 3. Close snackbar
+
 import { create } from "zustand";
 
 const useUIStore = create((set) => ({

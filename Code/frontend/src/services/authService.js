@@ -1,3 +1,9 @@
+// 1. Send login request
+// 2. Send refresh token request
+// 3. Send register request
+// 4. Fetch current logged-in user details
+
+
 import apiClient from "./apiClient";
 
 /**

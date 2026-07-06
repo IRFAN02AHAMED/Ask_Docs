@@ -1,3 +1,7 @@
+// This file stores dashboard stats temporarily in Zustand memory.
+// fetchDashboardStats() → fetch dashboard counts/statistics from backend
+
+
 import { create } from "zustand";
 import * as dashboardService from "../services/dashboardService";
 

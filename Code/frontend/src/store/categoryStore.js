@@ -1,3 +1,11 @@
+// This file manages category-related frontend state.
+
+// fetchCategories()  → fetch and store categories
+// createCategory()   → create category
+// updateCategory()   → update category
+// deleteCategory()   → delete category
+
+
 import { create } from "zustand";
 import * as categoryService from "../services/categoryService";
 

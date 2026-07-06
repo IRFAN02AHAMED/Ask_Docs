@@ -1,3 +1,15 @@
+// http://localhost:5173/admin/ai-validation
+
+// View pending AI answers
+// Approve correct answers
+// Reject wrong answers
+// Add validation notes
+// View unanswered questions
+// Manually submit answer for unanswered question
+// Upload updated document version if AI could not answer
+// Filter by user/category
+// Search questions
+
 import React, { useEffect, useState } from "react";
 import { 
   Box, Typography, Button, Paper, Table, TableHead, TableRow, TableCell, 

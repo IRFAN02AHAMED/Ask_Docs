@@ -1,3 +1,15 @@
+// createSession()      → create new Q&A chat/session
+// getSessions()        → fetch Q&A sessions
+// askQuestion()        → send user question to AI backend
+// getSessionMessages() → fetch messages in one session
+// getMessageById()     → fetch one Q&A message
+// sendFeedback()       → save helpful/not helpful feedback
+// validateMessage()    → admin approve/reject AI answer
+// getHistory()         → fetch Q&A history
+// getUnanswered()      → fetch unanswered queries
+// getAILogs()          → fetch AI logs for admin
+// deleteSession()      → delete a Q&A session
+
 import apiClient from "./apiClient";
 
 /**

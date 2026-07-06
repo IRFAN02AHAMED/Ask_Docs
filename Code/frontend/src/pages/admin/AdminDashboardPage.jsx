@@ -1,3 +1,15 @@
+//http://localhost:5173/admin/dashboard
+
+// Admin sidebar
+// Admin header
+// Top action buttons
+// Dashboard statistics
+// Recent documents table
+// Recent questions table
+// Status chips
+// Navigation to admin pages
+// Loading states
+
 import React, { useEffect } from "react";
 import { Box, Typography, Button, Paper, Grid, Table, TableHead, TableRow, TableCell, TableBody, TableContainer, Chip, CircularProgress } from "@mui/material";
 import { SharedAdminSidebar, SharedAdminHeader } from "../../components/layout/SharedLayout";

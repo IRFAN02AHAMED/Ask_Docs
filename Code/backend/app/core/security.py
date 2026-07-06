@@ -35,6 +35,7 @@ from app.core.logger import logger
 _pwd_context = CryptContext(schemes=["bcrypt"])
 
 # ── OAuth2 scheme — tells FastAPI where to look for the token ─────────────────
+# FastAPI reads token using OAuth2PasswordBearer
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/v1/auth/login")
 #It adds salt automatically.
 

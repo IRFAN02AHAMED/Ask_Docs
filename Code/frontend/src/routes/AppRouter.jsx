@@ -4,7 +4,7 @@ import { Box } from "@mui/material";
 import ROUTES from "./routePaths";
 
 // Layouts
-import AdminLayout from "../components/layout/AdminLayout";
+// import AdminLayout from "../components/layout/AdminLayout";
 import UserLayout from "../components/layout/UserLayout";
 import ProtectedRoute from "../components/layout/ProtectedRoute";
 import RoleBasedRoute from "../components/layout/RoleBasedRoute";

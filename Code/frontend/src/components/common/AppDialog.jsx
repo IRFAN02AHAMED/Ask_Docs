@@ -1,3 +1,8 @@
+/**
+* It is used in user history page and when he clicks on the history message card, it will open a dialog to show the full message.
+*/
+
+
 import React from "react";
 import { Dialog, DialogTitle, DialogContent, DialogActions, IconButton } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";

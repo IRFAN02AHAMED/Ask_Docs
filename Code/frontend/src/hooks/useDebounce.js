@@ -1,3 +1,8 @@
+// Custom hook for delaying a changing value in the Ask Docs AI frontend.
+
+//  * It is mainly used for search inputs so API calls do not happen on every key press.
+
+
 import { useState, useEffect } from "react";
 
 /**

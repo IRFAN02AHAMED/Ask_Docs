@@ -1,3 +1,6 @@
+// authStore = actual global storage for login data
+// useAuth = easy shortcut hook to use authStore data/actions in components
+
 import useAuthStore from "../store/authStore";
 
 /**

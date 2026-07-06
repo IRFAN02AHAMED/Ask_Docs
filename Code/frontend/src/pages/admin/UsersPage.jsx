@@ -79,14 +79,14 @@ const UsersPage = () => {
               variant="contained" 
               onClick={() => navigate("/admin/users/create")}
               sx={{ 
-                backgroundColor: "#10B981", 
+                backgroundColor: '#22C55E', 
                 color: "white", 
                 fontWeight: 600, 
                 textTransform: "none", 
                 borderRadius: 2,
                 px: 3,
                 boxShadow: "none",
-                '&:hover': { backgroundColor: "#059669", boxShadow: "none" }
+                '&:hover': { backgroundColor: '#16A34A', boxShadow: "none" }
               }}
             >
               + Create User

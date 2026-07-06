@@ -1,4 +1,16 @@
 // Token storage utilities using localStorage
+// Storing and reading login tokens/user data from localStorage
+
+// Save access token
+// Read access token
+// Remove access token
+// Save refresh token
+// Read refresh token
+// Remove refresh token
+// Save logged-in user data
+// Read logged-in user data
+// Remove logged-in user data
+// Clear all auth data during logout
 
 const ACCESS_TOKEN_KEY = "access_token";
 const REFRESH_TOKEN_KEY = "refresh_token";

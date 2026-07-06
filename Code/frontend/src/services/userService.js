@@ -1,3 +1,9 @@
+// getUsers()     → fetch users list
+// getUserById()  → fetch one user details
+// updateUser()   → edit user details
+// deleteUser()   → delete user
+// getRoles()     → fetch available roles
+
 import apiClient from "./apiClient";
 
 /**

@@ -1,3 +1,13 @@
+// userStore.js = global user management state manager using Zustand
+
+// 1. Store users list
+// 2. Store pagination data
+// 3. Store loading state
+// 4. Store error message
+// 5. Fetch users from backend
+// 6. Update user
+// 7. Delete user
+
 import { create } from "zustand";
 import * as userService from "../services/userService";
 

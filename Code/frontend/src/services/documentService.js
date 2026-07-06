@@ -1,3 +1,18 @@
+
+// 1. Upload a new document
+// 2. Fetch documents list
+// 3. Fetch one document by id
+// 4. Update document details
+// 5. Process/index a document
+// 6. Publish a document
+// 7. Fetch document versions
+// 8. Upload a new document version
+// 9. Fetch document chunks
+// 10. Fetch document processing logs
+// 11. Delete a document
+// 12. Update QA status for a document
+
+
 import apiClient from "./apiClient";
 
 /**
