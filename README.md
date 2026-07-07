@@ -603,19 +603,17 @@ Connect to the database and enable pgvector:
 CREATE EXTENSION IF NOT EXISTS vector;
 ```
 
-## 6. Run database migration
+## 6. Database Setup
 
-If your project uses SQL migration files, run them once in PostgreSQL.
+This project uses SQLAlchemy `create_all()` during backend startup to create the required tables automatically.
 
-Example:
+So normally, you do not need to run SQL migration files manually for the first setup.
 
-```bash
-psql -U postgres -d ask_docs_db -f migrations/001_initial_schema.sql
-```
+Just make sure the PostgreSQL database is created before starting the backend.
 
-If your project uses `create_all`, tables may be created automatically on startup.
+```sql
 
-Do not delete migration files after running them. The database changes will remain, but the migration files are useful for tracking, setup on another machine, and future deployment.
+CREATE DATABASE ask_docs_db;
 
 ## 7. Run seeder
 
