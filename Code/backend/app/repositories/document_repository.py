@@ -231,6 +231,91 @@ class DocumentRepository(BaseRepository[Document]):
             docs.append(doc)
         return docs, total
 
+    async def list_published_documents(
+        self,
+        page: int = 1,
+        page_size: int = 10,
+        search: Optional[str] = None,
+        category_id: Optional[UUID] = None,
+        sort_by: str = "created_at",
+        sort_order: str = "desc",
+    ) -> tuple[List[Document], int]:
+        """
+        Returns paginated list of strictly published documents for normal users.
+        """
+        from app.models.models import DocumentVersion, DocumentChunk, QAMessageSourceChunk, QAMessage, DocumentStatus
+        from sqlalchemy.orm import aliased
+        
+        DocStatus = aliased(DocumentStatus)
+        VerStatus = aliased(DocumentStatus)
+        
+        conditions = [
+            Document.is_active == True,
+            DocumentVersion.is_active == True,
+            DocumentVersion.is_current == True,
+            DocStatus.status_name == 'published',
+            VerStatus.status_name == 'published',
+        ]
+        
+        if search:
+            conditions.append(
+                or_(
+                    Document.title.ilike(f"%{search}%"),
+                    Document.tags.ilike(f"%{search}%"),
+                )
+            )
+        if category_id:
+            conditions.append(Document.category_id == category_id)
+            
+        count_stmt = (
+            select(func.count())
+            .select_from(Document)
+            .join(DocumentVersion, DocumentVersion.document_id == Document.id)
+            .join(DocStatus, Document.status_id == DocStatus.id)
+            .join(VerStatus, DocumentVersion.status_id == VerStatus.id)
+            .where(*conditions)
+        )
+        total = (await self.db.execute(count_stmt)).scalar_one()
+        
+        sort_map = {
+            "title":      Document.title,
+            "created_at": Document.created_at,
+            "updated_at": Document.updated_at,
+        }
+        col = sort_map.get(sort_by, Document.created_at)
+        order_fn = asc if sort_order == "asc" else desc
+
+        stmt = (
+            select(
+                Document,
+                func.count(func.distinct(QAMessage.id)).label('question_count')
+            )
+            .join(DocumentVersion, DocumentVersion.document_id == Document.id)
+            .join(DocStatus, Document.status_id == DocStatus.id)
+            .join(VerStatus, DocumentVersion.status_id == VerStatus.id)
+            .outerjoin(DocumentChunk, DocumentChunk.document_version_id == DocumentVersion.id)
+            .outerjoin(QAMessageSourceChunk, QAMessageSourceChunk.chunk_id == DocumentChunk.id)
+            .outerjoin(QAMessage, QAMessage.id == QAMessageSourceChunk.message_id)
+            .where(*conditions)
+            .group_by(Document.id)
+            .options(
+                selectinload(Document.category),
+                selectinload(Document.status),
+                selectinload(Document.uploader),
+                selectinload(Document.versions).selectinload(DocumentVersion.status),
+            )
+            .order_by(order_fn(col))
+            .offset((page - 1) * page_size)
+            .limit(page_size)
+        )
+        result = await self.db.execute(stmt)
+        docs = []
+        for row in result.all():
+            doc = row[0]
+            doc.question_count = row[1]
+            docs.append(doc)
+        return docs, total
+
 
 class DocumentVersionRepository(BaseRepository[DocumentVersion]):
     """Queries for the document_versions table."""
@@ -318,6 +403,18 @@ class DocumentVersionRepository(BaseRepository[DocumentVersion]):
         )
         await self.db.execute(stmt)
         await self.db.commit()
+
+    async def update_version_summary(self, version_id: UUID, summary: str) -> Optional[DocumentVersion]:
+        from sqlalchemy import update
+        stmt = (
+            update(DocumentVersion)
+            .where(DocumentVersion.id == version_id)
+            .values(summary=summary)
+            .returning(DocumentVersion)
+        )
+        result = await self.db.execute(stmt)
+        await self.db.commit()
+        return result.scalar_one_or_none()
 
 
 class DocumentChunkRepository(BaseRepository[DocumentChunk]):

@@ -36,6 +36,16 @@ const useDocumentStore = create((set) => ({
     }
   },
 
+  fetchPublishedDocuments: async (params = {}) => {
+    set({ loading: true, error: null });
+    try {
+      const { items, pagination } = await documentService.getPublishedDocuments(params);
+      set({ documents: items, pagination, loading: false });
+    } catch (err) {
+      set({ loading: false, error: err.response?.data?.message || "Failed to fetch published documents" });
+    }
+  },
+
   fetchDocumentById: async (id) => {
     set({ loading: true, error: null });
     try {
@@ -61,6 +71,22 @@ const useDocumentStore = create((set) => ({
   publishDocument: async (id) => {
     const doc = await documentService.publishDocument(id);
     return doc;
+  },
+
+  generateSummary: async (id) => {
+    const summary = await documentService.generateDocumentSummary(id);
+    set((state) => {
+      if (state.selectedDocument && state.selectedDocument.id === id) {
+        const doc = { ...state.selectedDocument };
+        if (doc.current_version) {
+          doc.current_version.summary = summary;
+        }
+        doc.summary = summary;
+        return { selectedDocument: doc };
+      }
+      return state;
+    });
+    return summary;
   },
 
   deleteDocument: async (id) => {

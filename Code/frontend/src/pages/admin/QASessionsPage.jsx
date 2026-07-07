@@ -16,6 +16,7 @@ import useQAStore from "../../store/qaStore";
 import useDocumentStore from "../../store/documentStore";
 import useDebounce from "../../hooks/useDebounce";
 import { formatDate, truncateText } from "../../utils/helpers";
+import { markdownToPlainText } from "../../utils/textFormatters";
 
 const QASessionsPage = () => {
   const { messages, loading: qaLoading, fetchHistory, clearMessages } = useQAStore();
@@ -181,7 +182,7 @@ const QASessionsPage = () => {
                     </Box>
                     {/* AI Answer */}
                     <Box sx={{ alignSelf: 'flex-start', backgroundColor: 'white', p: 2, borderRadius: 2, borderBottomLeftRadius: 0, maxWidth: '90%', border: '1px solid #E5E7EB', ml: 4 }}>
-                      <Typography sx={{ fontSize: '0.95rem', color: '#374151', lineHeight: 1.6 }}>{msg.answer || "No answer provided"}</Typography>
+                      <Typography sx={{ fontSize: '0.95rem', color: '#374151', lineHeight: 1.6, whiteSpace: 'pre-wrap' }}>{markdownToPlainText(msg.answer) || "No answer provided"}</Typography>
                     </Box>
                   </Box>
                 ))}

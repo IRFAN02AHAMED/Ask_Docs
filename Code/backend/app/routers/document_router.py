@@ -167,6 +167,29 @@ async def list_documents(
     return ResponseBuilder.paginated(items=out, total=total, page=page, page_size=page_size)
 
 
+@router.get("/documents/published", summary="List strictly published documents (paginated)")
+async def list_published_documents(
+    page:        int           = Query(default=1,    ge=1),
+    page_size:   int           = Query(default=10,   ge=1, le=100),
+    search:      Optional[str] = Query(default=None, description="Search in title or tags"),
+    category_id: Optional[UUID] = Query(default=None),
+    sort_by:     str           = Query(default="created_at"),
+    sort_order:  str           = Query(default="desc", pattern="^(asc|desc)$"),
+    db: AsyncSession = Depends(get_db),
+    _=Depends(get_current_user),
+):
+    """
+    Returns paginated list of ONLY published documents.
+    Both Document and Current Version must have 'published' status.
+    """
+    service = DocumentService(db)
+    items, total = await service.list_published_documents(
+        page, page_size, search, category_id, sort_by, sort_order
+    )
+    out = [DocumentListOut.model_validate(d).model_dump(mode="json") for d in items]
+    return ResponseBuilder.paginated(items=out, total=total, page=page, page_size=page_size)
+
+
 @router.post("/documents", summary="Upload a new document")
 async def upload_document(
     title:        str           = Form(...,    description="Document title"),
@@ -195,6 +218,26 @@ async def upload_document(
         data=DocumentOut.model_validate(doc).model_dump(mode="json"),
         message="Document uploaded successfully. Call /process to index it for Q&A.",
         status_code=201,
+    )
+
+
+@router.post("/documents/{document_id}/generate-summary", summary="Generate summary for document")
+async def generate_document_summary(
+    document_id: UUID,
+    db: AsyncSession = Depends(get_db),
+    current_user=Depends(get_current_user),
+):
+    """Generates an AI summary for a document."""
+    service = DocumentService(db)
+
+    summary = await service.generate_summary_for_document(
+        document_id=document_id,
+        current_user=current_user,
+    )
+
+    return ResponseBuilder.success(
+        message="Summary generated successfully.",
+        data={"summary": summary},
     )
 
 

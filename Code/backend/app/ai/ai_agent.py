@@ -200,6 +200,27 @@ async def generate_gemini_chat_response(
     return response.content.strip() if response and response.content else ""
 
 
+async def generate_document_summary(
+    document_text: str,
+    log_response: bool = False,
+) -> str:
+    """
+    Generates a document summary without creating AI logs.
+    """
+    prompt = f"""
+    Give detailed description of the document.
+
+    Read the following document content and write a long and detailed plain text description of this document/project. Explain what it is about, its purpose, important modules, workflow, technologies, architecture, roles, database or API flow if mentioned, and how it helps the user. Write it for someone opening the document for the first time. Do not use markdown, headings, bullet points, tables, bold text, or code blocks. Use normal plain text only. Keep the answer in 2 to 4 detailed paragraphs.
+
+    Document content:
+    {document_text}
+    """
+    return await generate_chat_response(
+        system_prompt="You are an expert document summarizer. Give a detailed and comprehensive description of the document.",
+        user_prompt=prompt,
+    )
+
+
 async def generate_chat_response(
     system_prompt: str,
     user_prompt: str,

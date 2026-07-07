@@ -223,6 +223,7 @@ class DocumentVersion(Base):
     status_id:     Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("document_statuses.id"), nullable=False)
     page_count:    Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     token_count:   Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
+    summary:       Mapped[Optional[str]] = mapped_column(Text, nullable=True)
     qa_test_status:Mapped[str]       = mapped_column(String(50), nullable=False, default="not_tested")
     qa_tested_at:  Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
     qa_tested_by:  Mapped[Optional[uuid.UUID]] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)

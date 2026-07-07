@@ -34,6 +34,7 @@ import UserDocumentsPage from "../pages/user/UserDocumentsPage";
 import AskDocsPage from "../pages/user/AskDocsPage";
 import UserHistoryPage from "../pages/user/UserHistoryPage";
 import UserSettingsPage from "../pages/user/UserSettingsPage";
+import UserDocumentDetailsPage from "../pages/user/UserDocumentDetailsPage";
 
 // Common Pages
 import NotFoundPage from "../pages/common/NotFoundPage";
@@ -87,6 +88,7 @@ const AppRouter = () => {
         >
           <Route index element={<Navigate to={ROUTES.USER_DOCUMENTS} replace />} />
           <Route path="documents" element={<UserDocumentsPage />} />
+          <Route path="documents/:id" element={<UserDocumentDetailsPage />} />
           <Route path="ask" element={<AskDocsPage />} />
           <Route path="history" element={<UserHistoryPage />} />
           <Route path="settings" element={<UserSettingsPage />} />

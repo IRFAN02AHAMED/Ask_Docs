@@ -33,8 +33,25 @@ import EventIcon from "@mui/icons-material/Event";
 import ChatBubbleOutlineIcon from "@mui/icons-material/ChatBubbleOutline";
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
+const getStatusName = (status) => {
+  if (!status) return "";
+  if (typeof status === "string") return status.toLowerCase();
+  return String(status.status_name || status.name || "").toLowerCase();
+};
+
+const isPublishedDocument = (doc) => {
+  const docStatus = getStatusName(doc.status);
+  const versionStatus = getStatusName(doc.current_version?.status);
+
+  if (docStatus && versionStatus) {
+    return docStatus === "published" && versionStatus === "published";
+  }
+
+  return docStatus === "published" || versionStatus === "published";
+};
+
 const UserDocumentsContainer = () => {
-  const { documents, pagination, loading, fetchDocuments } = useDocumentStore();
+  const { documents, pagination, loading, fetchPublishedDocuments } = useDocumentStore();
   const { page, pageSize, handlePageChange, handlePageSizeChange, resetPage } = usePagination();
   const navigate = useNavigate();
 
@@ -48,8 +65,8 @@ const UserDocumentsContainer = () => {
   useEffect(() => {
     const params = { page, page_size: pageSize, sort_by: "created_at", sort_order: "desc" };
     if (debouncedSearch) params.search = debouncedSearch;
-    fetchDocuments(params);
-  }, [page, pageSize, debouncedSearch]);
+    fetchPublishedDocuments(params);
+  }, [page, pageSize, debouncedSearch, fetchPublishedDocuments]);
 
   const handleAsk = (documentId) => {
     navigate(`/user/ask?document_id=${documentId}`);
@@ -67,16 +84,18 @@ const UserDocumentsContainer = () => {
         }
       />
 
-      {loading ? <AppLoader /> : documents.length === 0 ? (
+      {loading ? <AppLoader /> : documents.length === 0 || documents.filter(isPublishedDocument).length === 0 ? (
         <EmptyState message="No documents available" icon={DescriptionIcon} />
       ) : (
         <>
           <Grid container spacing={3}>
-            {documents.map((doc, index) => {
+            {documents.filter(isPublishedDocument).map((doc, index) => {
               const isFeatured = index === 0;
               return (
                 <Grid item xs={12} sm={isFeatured ? 12 : 6} md={isFeatured ? 12 : 4} key={doc.id}>
-                  <AppCard sx={{ 
+                  <AppCard 
+                    onClick={() => navigate(`/user/documents/${doc.id}`)}
+                    sx={{ 
                     height: "100%", 
                     display: "flex", 
                     flexDirection: "column", 
@@ -89,6 +108,7 @@ const UserDocumentsContainer = () => {
                       backgroundImage: "radial-gradient(circle at top right, rgba(22, 163, 74, 0.08) 0%, rgba(255, 255, 255, 0) 40%)",
                       backgroundColor: "#FFFFFF"
                     }),
+                    cursor: "pointer",
                     "&:hover": { borderColor: "#16A34A", boxShadow: "0 4px 12px rgba(0,0,0,0.05)" } 
                   }}>
                     
@@ -199,7 +219,7 @@ const UserDocumentsContainer = () => {
                       {isFeatured ? (
                         <Button 
                           variant="contained" 
-                          onClick={() => handleAsk(doc.id)}
+                          onClick={(e) => { e.stopPropagation(); handleAsk(doc.id); }}
                           sx={{ 
                             backgroundColor: "#16A34A", 
                             color: "#FFFFFF", 
@@ -222,7 +242,7 @@ const UserDocumentsContainer = () => {
                       ) : (
                         <Button 
                           variant="text" 
-                          onClick={() => handleAsk(doc.id)}
+                          onClick={(e) => { e.stopPropagation(); handleAsk(doc.id); }}
                           sx={{ 
                             color: "#16A34A", 
                             textTransform: "none",

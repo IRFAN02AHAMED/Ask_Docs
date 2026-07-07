@@ -211,6 +211,7 @@ class DocumentVersionOut(BaseSchema):
     file_type:     Optional[str]
     page_count:    Optional[int]
     token_count:   Optional[int]
+    summary:       Optional[str] = None
     qa_test_status:str
     qa_tested_at:  Optional[datetime]
     qa_question:   Optional[str] = None
@@ -230,6 +231,7 @@ class DocumentOut(BaseSchema):
     status:             Optional[DocumentStatusOut]
     uploader:           Optional[UserListOut]
     question_count:     int = 0
+    summary:            Optional[str] = None
     current_version:    Optional[DocumentVersionOut] = None
     created_at:         datetime
     updated_at:         datetime

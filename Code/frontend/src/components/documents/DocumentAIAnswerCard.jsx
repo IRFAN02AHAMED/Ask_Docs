@@ -6,6 +6,7 @@ import ThumbDownOutlinedIcon from "@mui/icons-material/ThumbDownOutlined";
 import FileCopyOutlinedIcon from "@mui/icons-material/FileCopyOutlined";
 import { SourceChunksSection } from "../../components/common/SourceChunkCard";
 import { getConfidenceBadge } from "../../utils/documentHelpers";
+import { markdownToPlainText } from "../../utils/textFormatters";
 
 const DocumentAIAnswerCard = ({
   activeAnswer,
@@ -149,7 +150,7 @@ const DocumentAIAnswerCard = ({
                 whiteSpace: "pre-wrap",
               }}
             >
-              {activeAnswer.answer}
+              {markdownToPlainText(activeAnswer.answer)}
             </Typography>
 
             <Box
@@ -237,7 +238,7 @@ const DocumentAIAnswerCard = ({
               <Button
                 size="small"
                 variant="outlined"
-                onClick={() => handleCopy(activeAnswer.answer)}
+                onClick={() => handleCopy(markdownToPlainText(activeAnswer.answer))}
                 startIcon={
                   <FileCopyOutlinedIcon
                     sx={{ fontSize: 14, color: "#4B5563" }}

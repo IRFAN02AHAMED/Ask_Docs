@@ -41,6 +41,19 @@ export const getDocuments = async (params = {}) => {
 };
 
 /**
+ * GET /api/v1/documents/published
+ * Query: page, page_size, search, category_id, sort_by, sort_order
+ * Returns: { items: DocumentListOut[], pagination }
+ */
+export const getPublishedDocuments = async (params = {}) => {
+  const response = await apiClient.get("/api/v1/documents/published", { params });
+  return {
+    items: response.data.data.items,
+    pagination: response.data.data.pagination,
+  };
+};
+
+/**
  * GET /api/v1/documents/{id}
  * Returns: DocumentOut
  */
@@ -57,6 +70,11 @@ export const getDocumentById = async (id) => {
 export const updateDocument = async (id, data) => {
   const response = await apiClient.patch(`/api/v1/documents/${id}`, data);
   return response.data.data;
+};
+
+export const generateDocumentSummary = async (id) => {
+  const response = await apiClient.post(`/api/v1/documents/${id}/generate-summary`);
+  return response.data.data.summary;
 };
 
 /**
